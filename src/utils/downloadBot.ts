@@ -1,9 +1,11 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
-// All bot source files embedded as strings
-const botSourceFiles = {
-  'package.json': `{
+// Complete bot source files
+const botFiles: Record<string, string> = {};
+
+// package.json
+botFiles['package.json'] = `{
   "name": "vaultix-bot",
   "version": "1.0.0",
   "description": "Vaultix - Fantasy Wizardry Progression Discord Bot",
@@ -11,8 +13,7 @@ const botSourceFiles = {
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "ts-node index.ts",
-    "deploy": "ts-node deploy-commands.ts"
+    "deploy": "node dist/deploy-commands.js"
   },
   "dependencies": {
     "discord.js": "^14.14.1",
@@ -22,7 +23,6 @@ const botSourceFiles = {
   },
   "devDependencies": {
     "typescript": "^5.3.3",
-    "ts-node": "^10.9.2",
     "@types/sql.js": "^1.4.9",
     "@types/uuid": "^9.0.7",
     "@types/node": "^20.11.5"
@@ -30,33 +30,36 @@ const botSourceFiles = {
   "engines": {
     "node": ">=18.0.0"
   }
-}`,
+}`;
 
-  'tsconfig.json': `{
+// tsconfig.json
+botFiles['tsconfig.json'] = `{
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
     "outDir": "./dist",
     "rootDir": ".",
-    "strict": true,
+    "strict": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "declaration": true,
-    "sourceMap": true,
     "moduleResolution": "node"
   },
   "include": ["./**/*.ts"],
   "exclude": ["node_modules", "dist"]
-}`,
+}`;
 
-  '.env.example': `# Vaultix Discord Bot Configuration
+// .env.example
+botFiles['.env.example'] = `# Vaultix Discord Bot Configuration
+# Copy this to .env and fill in your values
+
 DISCORD_TOKEN=your_bot_token_here
-CLIENT_ID=your_client_id_here`,
+CLIENT_ID=your_application_id_here`;
 
-  'README.md': `# ✨ Vaultix - Fantasy Wizardry Discord Bot
+// README.md
+botFiles['README.md'] = `# ✨ Vaultix - Fantasy Wizardry Discord Bot
 
 Complete fantasy wizardry progression Discord bot with combat, dungeons, spells, families, wands, and economy.
 
@@ -91,9 +94,10 @@ Edit \`config/index.ts\` to adjust all balancing values.
 ## 📄 License
 
 MIT
-`,
+`;
 
-  'config/index.ts': `export const CONFIG = {
+// config/index.ts
+botFiles['config/index.ts'] = `export const CONFIG = {
   XP_PER_LEVEL: (level: number) => Math.floor(100 * Math.pow(1.5, level - 1)),
   WORK_COOLDOWN_MS: 60000,
   WORK_XP_MIN: 15,
@@ -138,9 +142,10 @@ export const RARITY_COLORS: Record<string, number> = {
   mythic: 0xe74c3c,
   extremely_rare: 0xff00ff,
 };
-`,
+`;
 
-  'config/families.ts': `export interface Family {
+// config/families.ts
+botFiles['config/families.ts'] = `export interface Family {
   name: string;
   rarity: string;
   description: string;
@@ -172,9 +177,113 @@ export const FAMILIES: Family[] = [
 export function getFamilyByName(name: string): Family | undefined {
   return FAMILIES.find(f => f.name.toLowerCase() === name.toLowerCase());
 }
-`,
+`;
 
-  'database/index.ts': `import initSqlJs, { Database as SqlJsDatabase } from 'sql.js';
+// config/wands.ts
+botFiles['config/wands.ts'] = `export interface Wand {
+  name: string;
+  rarity: string;
+  description: string;
+  damageMultiplier: number;
+  mpBonus: number;
+  spellEfficiency: number;
+  passive?: string;
+  core: string;
+  wood: string;
+  length: string;
+}
+
+export const WANDS: Wand[] = [
+  { name: 'Holly and Phoenix Feather', rarity: 'common', description: 'Balanced wand.', damageMultiplier: 1.1, mpBonus: 5, spellEfficiency: 0.05, core: 'Phoenix Feather', wood: 'Holly', length: '11"' },
+  { name: 'Vine and Dragon Heartstring', rarity: 'uncommon', description: 'Powerful wand.', damageMultiplier: 1.25, mpBonus: 8, spellEfficiency: 0.06, core: 'Dragon Heartstring', wood: 'Vine', length: '10.5"' },
+  { name: 'Ebony and Dragon Heartstring', rarity: 'rare', description: 'Battle-mage wand.', damageMultiplier: 1.45, mpBonus: 10, spellEfficiency: 0.08, core: 'Dragon Heartstring', wood: 'Ebony', length: '11.5"' },
+  { name: 'Sambucus and Thestral Tail Hair', rarity: 'legendary', description: 'Most legendary wand.', damageMultiplier: 2.0, mpBonus: 30, spellEfficiency: 0.15, core: 'Thestral Tail Hair', wood: 'Sambucus', length: '15"' },
+  { name: 'Celestium and Starfire Core', rarity: 'extremely_rare', description: 'Cosmic power.', damageMultiplier: 3.0, mpBonus: 50, spellEfficiency: 0.22, core: 'Starfire', wood: 'Celestium', length: '16"' },
+];
+
+export function getWandByName(name: string): Wand | undefined {
+  return WANDS.find(w => w.name === name);
+}
+`;
+
+// config/spells.ts
+botFiles['config/spells.ts'] = `export interface Spell {
+  id: string;
+  name: string;
+  description: string;
+  damage: number;
+  mpCost: number;
+  cooldown: number;
+  rarity: string;
+  requiredLevel: number;
+  type: 'attack' | 'heal' | 'buff' | 'debuff';
+  shopPrice: number;
+}
+
+export const SPELLS: Spell[] = [
+  { id: 'arcflare', name: 'Arcflare', description: 'Arcane fire burst.', damage: 25, mpCost: 10, cooldown: 0, rarity: 'common', requiredLevel: 10, type: 'attack', shopPrice: 100 },
+  { id: 'frostbind', name: 'Frostbind', description: 'Icy chains.', damage: 30, mpCost: 15, cooldown: 1, rarity: 'common', requiredLevel: 10, type: 'attack', shopPrice: 150 },
+  { id: 'thunder_lash', name: 'Thunder Lash', description: 'Lightning whip.', damage: 40, mpCost: 20, cooldown: 1, rarity: 'uncommon', requiredLevel: 15, type: 'attack', shopPrice: 300 },
+  { id: 'aegis', name: 'Aegis', description: 'Healing barrier.', damage: 30, mpCost: 20, cooldown: 3, rarity: 'common', requiredLevel: 12, type: 'heal', shopPrice: 200 },
+];
+
+export function getSpellById(id: string): Spell | undefined {
+  return SPELLS.find(s => s.id === id);
+}
+`;
+
+// config/monsters.ts
+botFiles['config/monsters.ts'] = `export interface Monster {
+  id: string;
+  name: string;
+  description: string;
+  baseHP: number;
+  baseDamage: number;
+  baseDefense: number;
+  xpReward: number;
+  coinReward: number;
+  difficulty: number;
+  minFloor: number;
+}
+
+export const MONSTERS: Monster[] = [
+  { id: 'goblin', name: 'Goblin', description: 'Sneaky creature.', baseHP: 30, baseDamage: 8, baseDefense: 2, xpReward: 15, coinReward: 8, difficulty: 1, minFloor: 1 },
+  { id: 'dark_hound', name: 'Dark Hound', description: 'Shadowy beast.', baseHP: 45, baseDamage: 12, baseDefense: 3, xpReward: 20, coinReward: 12, difficulty: 2, minFloor: 3 },
+  { id: 'shadow_beast', name: 'Shadow Beast', description: 'Pure darkness.', baseHP: 70, baseDamage: 18, baseDefense: 5, xpReward: 35, coinReward: 20, difficulty: 4, minFloor: 10 },
+  { id: 'stone_golem', name: 'Stone Golem', description: 'Living stone.', baseHP: 120, baseDamage: 15, baseDefense: 15, xpReward: 45, coinReward: 30, difficulty: 5, minFloor: 15 },
+];
+
+export function getRandomMonsterForFloor(floor: number): Monster {
+  const available = MONSTERS.filter(m => m.minFloor <= floor);
+  return available[Math.floor(Math.random() * available.length)];
+}
+`;
+
+// config/shop.ts
+botFiles['config/shop.ts'] = `export interface ShopItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: 'spell' | 'potion' | 'reroll' | 'material';
+  spellId?: string;
+  stackable: boolean;
+}
+
+export const SHOP_ITEMS: ShopItem[] = [
+  { id: 'spell_arcflare', name: 'Arcflare', description: 'Learn Arcflare spell.', price: 100, category: 'spell', spellId: 'arcflare', stackable: false },
+  { id: 'spell_frostbind', name: 'Frostbind', description: 'Learn Frostbind spell.', price: 150, category: 'spell', spellId: 'frostbind', stackable: false },
+  { id: 'health_potion', name: 'Health Potion', description: 'Restores 50 HP.', price: 50, category: 'potion', stackable: true },
+  { id: 'family_reroll', name: 'Family Reroll', description: 'Reroll your family.', price: 500, category: 'reroll', stackable: true },
+];
+
+export function getShopItemById(id: string): ShopItem | undefined {
+  return SHOP_ITEMS.find(i => i.id === id);
+}
+`;
+
+// database/index.ts
+botFiles['database/index.ts'] = `import initSqlJs, { Database as SqlJsDatabase } from 'sql.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -223,11 +332,7 @@ function createTables() {
     family TEXT DEFAULT NULL,
     wand TEXT DEFAULT NULL,
     is_wizard INTEGER DEFAULT 0,
-    dungeon_floor INTEGER DEFAULT 0,
-    damage INTEGER DEFAULT 10,
-    defense INTEGER DEFAULT 5,
-    luck INTEGER DEFAULT 5,
-    intelligence INTEGER DEFAULT 5
+    dungeon_floor INTEGER DEFAULT 0
   )\`);
 }
 
@@ -253,19 +358,144 @@ export const PlayerDB = {
     return PlayerDB.get(userId);
   },
   getOrCreate(userId: string, username: string) {
-    const player = PlayerDB.get(userId);
-    return player || PlayerDB.create(userId, username);
+    return PlayerDB.get(userId) || PlayerDB.create(userId, username);
   },
-  update(userId: string, data: Record<string, any>) {
+  update(userId: string,  Record<string, any>) {
     const keys = Object.keys(data).map(k => \`\${k} = ?\`).join(', ');
     const values = [...Object.values(data), userId];
     run(\`UPDATE players SET \${keys} WHERE user_id = ?\`, values);
   },
 };
-`,
+`;
 
-  'index.ts': `import { Client, GatewayIntentBits, Events } from 'discord.js';
+// systems/player.ts
+botFiles['systems/player.ts'] = `import { PlayerDB } from '../database';
+import { CONFIG } from '../config';
+import { getFamilyByName } from '../config/families';
+import { WANDS } from '../config/wands';
+
+export class PlayerManager {
+  static getEffectiveMaxMP(player: any): number {
+    const familyBonus = player.family ? (getFamilyByName(player.family)?.bonuses.mp || 0) : 0;
+    const wandBonus = player.wand ? (WANDS.find(w => w.name === player.wand)?.mpBonus || 0) : 0;
+    return CONFIG.BASE_MP + (player.level * CONFIG.MP_PER_LEVEL) + familyBonus + wandBonus;
+  }
+
+  static assignFamily() {
+    const roll = Math.random();
+    let cumulative = 0;
+    const { FAMILIES } = require('../config/families');
+    
+    for (const [rarity, chance] of Object.entries(CONFIG.FAMILY_RARITY_CHANCES)) {
+      cumulative += chance;
+      if (roll <= cumulative) {
+        const familiesOfRarity = FAMILIES.filter((f: any) => f.rarity === rarity);
+        return familiesOfRarity[Math.floor(Math.random() * familiesOfRarity.length)];
+      }
+    }
+    return FAMILIES[0];
+  }
+
+  static assignWand() {
+    const roll = Math.random();
+    let rarity: string;
+    if (roll < 0.005) rarity = 'extremely_rare';
+    else if (roll < 0.07) rarity = 'legendary';
+    else if (roll < 0.35) rarity = 'rare';
+    else if (roll < 0.60) rarity = 'uncommon';
+    else rarity = 'common';
+    
+    const wandsOfRarity = WANDS.filter(w => w.rarity === rarity);
+    return wandsOfRarity[Math.floor(Math.random() * wandsOfRarity.length)];
+  }
+}
+`;
+
+// commands/work.ts
+botFiles['commands/work.ts'] = `import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { PlayerDB } from '../database';
+import { CONFIG } from '../config';
+
+export const data = new SlashCommandBuilder()
+  .setName('work')
+  .setDescription('Work to earn XP and coins');
+
+export async function execute(interaction: any) {
+  const player = PlayerDB.getOrCreate(interaction.user.id, interaction.user.username);
+  const xpGained = Math.floor(Math.random() * (CONFIG.WORK_XP_MAX - CONFIG.WORK_XP_MIN + 1)) + CONFIG.WORK_XP_MIN;
+  const coinsGained = Math.floor(Math.random() * (CONFIG.WORK_COINS_MAX - CONFIG.WORK_COINS_MIN + 1)) + CONFIG.WORK_COINS_MIN;
+  
+  PlayerDB.update(interaction.user.id, {
+    xp: player.xp + xpGained,
+    coins: player.coins + coinsGained
+  });
+
+  const embed = new EmbedBuilder()
+    .setTitle('💼 Work Complete!')
+    .setDescription('You earned XP and coins!')
+    .setColor(0x2ecc71);
+
+  return interaction.reply({ embeds: [embed] });
+}
+`;
+
+// commands/profile.ts
+botFiles['commands/profile.ts'] = `import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { PlayerDB } from '../database';
+
+export const data = new SlashCommandBuilder()
+  .setName('profile')
+  .setDescription('View your Vaultix profile');
+
+export async function execute(interaction: any) {
+  const player = PlayerDB.getOrCreate(interaction.user.id, interaction.user.username);
+  
+  const embed = new EmbedBuilder()
+    .setTitle('✨ VAULTIX PROFILE')
+    .setColor(0x9b59b6)
+    .addFields(
+      { name: 'Level', value: \`\${player.level}\`, inline: true },
+      { name: 'XP', value: \`\${player.xp}\`, inline: true },
+      { name: 'Coins', value: \`\${player.coins}\`, inline: true },
+      { name: 'Family', value: player.family || 'None', inline: true },
+      { name: 'Wand', value: player.wand || 'None', inline: true },
+      { name: 'Status', value: player.is_wizard ? '🧙 Wizard' : '👷 Worker', inline: true },
+    );
+
+  return interaction.reply({ embeds: [embed] });
+}
+`;
+
+// commands/enlist.ts
+botFiles['commands/enlist.ts'] = `import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { PlayerDB } from '../database';
+
+export const data = new SlashCommandBuilder()
+  .setName('enlist')
+  .setDescription('Begin your journey in Vaultix');
+
+export async function execute(interaction: any) {
+  const existing = PlayerDB.get(interaction.user.id);
+  if (existing) {
+    return interaction.reply({ content: 'You already have a profile!', ephemeral: true });
+  }
+
+  PlayerDB.create(interaction.user.id, interaction.user.username);
+
+  const embed = new EmbedBuilder()
+    .setTitle('✨ Welcome to Vaultix!')
+    .setDescription(\`Welcome, **\${interaction.user.username}**! Your journey begins now.\\n\\nUse \\\`/work\\\` to earn XP and coins.\\nReach Level 10 to unlock the path of the Wizard!\`)
+    .setColor(0x9b59b6);
+
+  return interaction.reply({ embeds: [embed] });
+}
+`;
+
+// index.ts
+botFiles['index.ts'] = `import { Client, GatewayIntentBits, Collection, Events } from 'discord.js';
 import { initDatabase } from './database';
+import path from 'path';
+import fs from 'fs';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -275,9 +505,32 @@ async function startBot() {
   console.log('✅ Database initialized');
 
   const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+  const commands = new Collection();
+
+  const commandsPath = path.join(__dirname, 'commands');
+  const commandFiles = fs.readdirSync(commandsPath).filter((file: string) => file.endsWith('.js'));
+
+  for (const file of commandFiles) {
+    const command = require(path.join(commandsPath, file));
+    if (command.data && command.execute) {
+      commands.set(command.data.name, command);
+    }
+  }
 
   client.once(Events.ClientReady, (c) => {
     console.log(\`✨ Vaultix is online as \${c.user.tag}\`);
+  });
+
+  client.on(Events.InteractionCreate, async (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
+    const command = commands.get(interaction.commandName);
+    if (!command) return;
+    try {
+      await command.execute(interaction);
+    } catch (error) {
+      console.error(error);
+      await interaction.reply({ content: '❌ Error executing command', ephemeral: true });
+    }
   });
 
   const token = process.env.DISCORD_TOKEN;
@@ -290,20 +543,47 @@ async function startBot() {
 }
 
 startBot();
-`,
-};
+`;
+
+// deploy-commands.ts
+botFiles['deploy-commands.ts'] = `import { REST, Routes } from 'discord.js';
+import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const commands: any[] = [];
+const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
+for (const file of commandFiles) {
+  const command = require(path.join(commandsPath, file));
+  if (command.data) {
+    commands.push(command.data.toJSON());
+  }
+}
+
+const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
+
+(async () => {
+  try {
+    console.log(\`Registering \${commands.length} commands...\`);
+    await rest.put(Routes.applicationCommands(process.env.CLIENT_ID!), { body: commands });
+    console.log('✅ Commands registered!');
+  } catch (error) {
+    console.error(error);
+  }
+})();
+`;
 
 export async function generateVaultixZip(): Promise<void> {
   const zip = new JSZip();
   
-  // Add all files
-  Object.entries(botSourceFiles).forEach(([filename, content]) => {
+  Object.entries(botFiles).forEach(([filename, content]) => {
     zip.file(filename, content);
   });
 
-  // Generate ZIP
-  const blob = await zip.generateAsync({ type: 'blob' });
-  
-  // Download
+  const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 9 } });
   saveAs(blob, 'vaultix-bot.zip');
 }
