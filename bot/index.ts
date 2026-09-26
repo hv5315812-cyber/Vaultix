@@ -22,8 +22,15 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Initialize database
-initDatabase();
+// Initialize database (async for sql.js)
+let dbReady = false;
+initDatabase().then(() => {
+  dbReady = true;
+  console.log('✅ Database initialized');
+}).catch(err => {
+  console.error('❌ Database initialization failed:', err);
+  process.exit(1);
+});
 
 // Create client
 const client = new Client({
@@ -52,14 +59,26 @@ console.log(`Loaded ${commands.size} commands: ${[...commands.keys()].join(', ')
 
 // MP Regeneration
 setInterval(() => {
-  const db = require('./database').getDatabase();
-  const wizards = db.prepare('SELECT * FROM players WHERE is_wizard = 1').all() as any[];
-  for (const player of wizards) {
-    const maxMp = PlayerManager.getEffectiveMaxMP(player);
-    if (player.mp < maxMp) {
-      const newMp = Math.min(maxMp, player.mp + CONFIG.MP_REGEN_AMOUNT);
-      db.prepare('UPDATE players SET mp = ? WHERE user_id = ?').run(newMp, player.user_id);
+  try {
+    const { getDatabase, saveDatabase } = require('./database');
+    const db = getDatabase();
+    const stmt = db.prepare('SELECT * FROM players WHERE is_wizard = 1');
+    const wizards: any[] = [];
+    while (stmt.step()) {
+      wizards.push(stmt.getAsObject());
     }
+    stmt.free();
+
+    for (const player of wizards) {
+      const maxMp = PlayerManager.getEffectiveMaxMP(player);
+      if (player.mp < maxMp) {
+        const newMp = Math.min(maxMp, player.mp + CONFIG.MP_REGEN_AMOUNT);
+        db.run('UPDATE players SET mp = ? WHERE user_id = ?', [newMp, player.user_id]);
+      }
+    }
+    saveDatabase();
+  } catch (e) {
+    // Database not ready yet, skip this tick
   }
 }, CONFIG.MP_REGEN_INTERVAL_MS);
 
@@ -584,10 +603,20 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 });
 
 // Login
-const token = process.env.DISCORD_TOKEN;
-if (!token) {
-  console.error('❌ DISCORD_TOKEN not found in .env file!');
-  process.exit(1);
+async function startBot() {
+  const token = process.env.DISCORD_TOKEN;
+  if (!token) {
+    console.error('❌ DISCORD_TOKEN not found in .env file!');
+    process.exit(1);
+  }
+
+  // Wait for database
+  while (!dbReady) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+
+  console.log('🔌 Connecting to Discord...');
+  await client.login(token);
 }
 
-client.login(token);
+startBot();

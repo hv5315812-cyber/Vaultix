@@ -7,7 +7,7 @@ import {
   Database, Code, FileText, ArrowRight, ExternalLink
 } from 'lucide-react';
 
-type Tab = 'overview' | 'commands' | 'systems' | 'families' | 'spells' | 'wands' | 'setup' | 'files';
+type Tab = 'overview' | 'commands' | 'systems' | 'families' | 'spells' | 'wands' | 'setup' | 'katabump' | 'files';
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
@@ -20,6 +20,7 @@ function App() {
     { id: 'spells', label: 'Spells', icon: Zap },
     { id: 'wands', label: 'Wands', icon: Wand2 },
     { id: 'setup', label: 'Setup Guide', icon: FileText },
+    { id: 'katabump', label: 'KataBump Deploy', icon: ExternalLink },
     { id: 'files', label: 'Project Files', icon: Code },
   ];
 
@@ -108,6 +109,7 @@ function App() {
               {activeTab === 'spells' && <SpellsTab />}
               {activeTab === 'wands' && <WandsTab />}
               {activeTab === 'setup' && <SetupTab />}
+              {activeTab === 'katabump' && <KataBumpTab />}
               {activeTab === 'files' && <FilesTab />}
             </motion.div>
           </AnimatePresence>
@@ -748,6 +750,150 @@ function FilesTab() {
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+function KataBumpTab() {
+  return (
+    <div className="space-y-6">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-600/20 to-emerald-600/20 border border-green-500/30 p-8">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-3xl" />
+        <h2 className="text-3xl font-bold mb-3">🚀 Deploy to KataBump</h2>
+        <p className="text-gray-300 text-lg max-w-2xl">
+          Host your Vaultix bot 24/7 for free on KataBump. No credit card required.
+          308 MB RAM, 716 MB storage — more than enough for Vaultix!
+        </p>
+        <div className="mt-4 flex gap-3">
+          <a
+            href="https://katabump.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 rounded-lg bg-green-500/20 border border-green-500/30 text-green-300 text-sm font-medium hover:bg-green-500/30 transition-colors inline-flex items-center gap-2"
+          >
+            Visit KataBump <ExternalLink className="w-4 h-4" />
+          </a>
+          <a
+            href="https://docs.katabump.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 rounded-lg bg-gray-500/20 border border-gray-500/30 text-gray-300 text-sm font-medium hover:bg-gray-500/30 transition-colors inline-flex items-center gap-2"
+          >
+            Read Docs <ExternalLink className="w-4 h-4" />
+          </a>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <KataBumpStep number={1} title="Create Discord Bot Application">
+          <ol className="space-y-2 text-sm text-gray-300 list-decimal list-inside">
+            <li>Go to <a href="https://discord.com/developers/applications" className="text-purple-400 hover:underline" target="_blank">Discord Developer Portal</a></li>
+            <li>Click "New Application" → Name it "Vaultix"</li>
+            <li>Go to "Bot" tab → Click "Add Bot"</li>
+            <li>Enable <strong>Message Content Intent</strong> and <strong>Server Members Intent</strong></li>
+            <li>Copy your <strong>Bot Token</strong> (keep secret!)</li>
+            <li>Copy your <strong>Application ID</strong> from General Information</li>
+          </ol>
+        </KataBumpStep>
+
+        <KataBumpStep number={2} title="Create KataBump Server">
+          <ol className="space-y-2 text-sm text-gray-300 list-decimal list-inside">
+            <li>Sign up at <a href="https://control.katabump.com" className="text-green-400 hover:underline" target="_blank">control.katabump.com</a></li>
+            <li>Click "Create Server" → Select "Discord Bot"</li>
+            <li>Choose <strong>Node.js</strong> runtime</li>
+            <li>Select the <strong>Free plan</strong> (308 MB RAM)</li>
+            <li>Name it "Vaultix Bot" → Click Create</li>
+          </ol>
+        </KataBumpStep>
+
+        <KataBumpStep number={3} title="Prepare & Upload Files">
+          <div className="space-y-3 text-sm text-gray-300">
+            <p>1. Copy all files from the <code className="text-purple-400">bot/</code> folder</p>
+            <p>2. Create a <code className="text-purple-400">.env</code> file with your tokens:</p>
+            <CodeBlock code={`DISCORD_TOKEN=your_bot_token_here\nCLIENT_ID=your_application_id_here`} />
+            <p>3. ZIP everything and upload to KataBump's "Files" tab</p>
+            <p>4. Right-click the ZIP → "Unarchive"</p>
+          </div>
+        </KataBumpStep>
+
+        <KataBumpStep number={4} title="Configure Startup">
+          <div className="space-y-3 text-sm text-gray-300">
+            <p>In the <strong>"Startup"</strong> tab, set:</p>
+            <div className="rounded-lg bg-gray-800/50 border border-gray-700/50 p-4">
+              <table className="w-full text-sm">
+                <tbody>
+                  <tr className="border-b border-gray-700/30">
+                    <td className="py-2 font-medium">JS FILE</td>
+                    <td className="py-2 text-green-400 font-mono">dist/index.js</td>
+                  </tr>
+                  <tr className="border-b border-gray-700/30">
+                    <td className="py-2 font-medium">Node.js Version</td>
+                    <td className="py-2 text-green-400 font-mono">18.x</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 font-medium">Additional Packages</td>
+                    <td className="py-2 text-gray-500">(leave empty)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </KataBumpStep>
+
+        <KataBumpStep number={5} title="Build & Start">
+          <div className="space-y-3 text-sm text-gray-300">
+            <p>In the KataBump console, run these commands:</p>
+            <CodeBlock code={`# Install dependencies (automatic from package.json)\n# Compile TypeScript to JavaScript\nnpm install -g typescript\nnpm run build\n\n# Register slash commands with Discord\nnpm run deploy\n\n# Start the bot\nnpm start`} />
+            <p>You should see:</p>
+            <CodeBlock code={`✅ Database initialized\n🔌 Connecting to Discord...\n✨ Vaultix is online! Logged in as Vaultix#1234\nServing X guilds`} />
+          </div>
+        </KataBumpStep>
+
+        <KataBumpStep number={6} title="Invite Bot to Server">
+          <div className="space-y-3 text-sm text-gray-300">
+            <p>Use this URL (replace YOUR_CLIENT_ID):</p>
+            <CodeBlock code={`https://discord.com/api/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=274878024768&scope=bot%20applications.commands`} />
+            <p>Then try <code className="text-purple-400">/enlist</code> in your server!</p>
+          </div>
+        </KataBumpStep>
+      </div>
+
+      <div className="rounded-xl bg-yellow-500/5 border border-yellow-500/30 p-5">
+        <h3 className="font-semibold text-yellow-400 flex items-center gap-2 mb-3">
+          ⚠️ Important Notes
+        </h3>
+        <ul className="space-y-2 text-sm text-gray-300">
+          <li>• <strong>sql.js</strong> is used instead of better-sqlite3 — no native compilation needed on KataBump</li>
+          <li>• Database auto-saves every 30 seconds to <code className="text-purple-400">vaultix.db</code></li>
+          <li>• Download <code className="text-purple-400">vaultix.db</code> regularly as backup via file manager</li>
+          <li>• Global slash commands take up to 1 hour to appear (add GUILD_ID for instant testing)</li>
+          <li>• Free tier may restart occasionally — your data is safe in the database file</li>
+        </ul>
+      </div>
+
+      <div className="rounded-xl bg-gray-900/50 border border-gray-700/50 p-5">
+        <h3 className="font-semibold mb-3">🔄 Updating Your Bot</h3>
+        <ol className="space-y-2 text-sm text-gray-300 list-decimal list-inside">
+          <li>Stop the bot in KataBump console</li>
+          <li>Upload new files (ZIP or SFTP)</li>
+          <li>Run <code className="text-purple-400">npm run build</code> if you changed TypeScript files</li>
+          <li>Start the bot again</li>
+        </ol>
+      </div>
+    </div>
+  );
+}
+
+function KataBumpStep({ number, title, children }: { number: number; title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-gray-700/50 bg-gray-900/30 p-5">
+      <h3 className="font-semibold flex items-center gap-3 mb-3">
+        <span className="w-7 h-7 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center text-sm text-green-400">
+          {number}
+        </span>
+        {title}
+      </h3>
+      {children}
     </div>
   );
 }

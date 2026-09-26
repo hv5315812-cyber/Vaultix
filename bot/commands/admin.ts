@@ -176,11 +176,13 @@ export async function execute(interaction: any) {
         });
       }
       // Reset all data
-      const db = require('../database').getDatabase();
-      db.prepare('DELETE FROM player_spells WHERE user_id = ?').run(targetUser.id);
-      db.prepare('DELETE FROM player_inventory WHERE user_id = ?').run(targetUser.id);
-      db.prepare('DELETE FROM combat_sessions WHERE user_id = ?').run(targetUser.id);
-      db.prepare('DELETE FROM players WHERE user_id = ?').run(targetUser.id);
+      const { getDatabase, saveDatabase } = require('../database');
+      const db = getDatabase();
+      db.run('DELETE FROM player_spells WHERE user_id = ?', [targetUser.id]);
+      db.run('DELETE FROM player_inventory WHERE user_id = ?', [targetUser.id]);
+      db.run('DELETE FROM combat_sessions WHERE user_id = ?', [targetUser.id]);
+      db.run('DELETE FROM players WHERE user_id = ?', [targetUser.id]);
+      saveDatabase();
       return interaction.editReply({
         embeds: [new EmbedBuilder()
           .setTitle('✅ Player Reset')
