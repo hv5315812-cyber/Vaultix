@@ -4,8 +4,9 @@ import {
   Sparkles, Sword, Shield, Scroll, Coins, Users, Wand2,
   Castle, BookOpen, Settings, Terminal, ChevronRight,
   Zap, Heart, Star, Crown, Skull, Package, RefreshCw,
-  Database, Code, FileText, ArrowRight, ExternalLink
+  Database, Code, FileText, ArrowRight, ExternalLink, Download, Loader2
 } from 'lucide-react';
+import { generateVaultixZip } from './utils/downloadBot';
 
 type Tab = 'overview' | 'commands' | 'systems' | 'families' | 'spells' | 'wands' | 'setup' | 'katabump' | 'files';
 
@@ -120,6 +121,20 @@ function App() {
 }
 
 function OverviewTab() {
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      await generateVaultixZip();
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to generate ZIP file. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-600/20 to-indigo-600/20 border border-purple-500/30 p-8">
@@ -129,6 +144,31 @@ function OverviewTab() {
           A complete fantasy wizardry progression Discord bot featuring combat, dungeons, spells,
           families, wands, and a full economy system. Built with Discord.js v14, SQLite, and TypeScript.
         </p>
+        
+        {/* Download Button */}
+        <div className="mt-6">
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="group relative inline-flex items-center gap-3 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold shadow-lg shadow-purple-500/25 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          >
+            {downloading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Generating ZIP...</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-5 h-5 group-hover:animate-bounce" />
+                <span>Download Vaultix Bot (.zip)</span>
+              </>
+            )}
+          </button>
+          <p className="text-sm text-gray-400 mt-2">
+            Complete bot source code ready for deployment
+          </p>
+        </div>
+
         <div className="mt-6 flex flex-wrap gap-3">
           <span className="px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 text-sm">
             50-Floor Dungeon
