@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Download, CheckCircle2, Copy, ExternalLink, Loader2, ChevronRight, ChevronDown } from 'lucide-react';
-import { generateVaultixZip } from '../utils/downloadBot';
+import { generateVaultixZip, downloadSetupGuide, downloadAllCodeAsText } from '../utils/downloadBot';
 
 export default function GuidePage() {
   const [downloading, setDownloading] = useState(false);
@@ -12,12 +12,14 @@ export default function GuidePage() {
   const handleDownload = async () => {
     setDownloading(true);
     try {
+      console.log('Starting ZIP generation...');
       await generateVaultixZip();
+      console.log('ZIP generation complete');
       setDownloaded(true);
       setTimeout(() => setExpandedStep(1), 500);
     } catch (error) {
       console.error('Download failed:', error);
-      alert('Failed to generate ZIP file. Please try again.');
+      alert(`Failed to generate ZIP file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setDownloading(false);
     }
@@ -62,8 +64,33 @@ export default function GuidePage() {
               </span>
             )}
           </button>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-gray-700"></div>
+            <span className="text-xs text-gray-500">OR</span>
+            <div className="flex-1 h-px bg-gray-700"></div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              onClick={downloadSetupGuide}
+              className="w-full py-3 px-6 rounded-xl font-medium text-base transition-all bg-gray-700 hover:bg-gray-600 text-gray-200 hover:scale-105"
+            >
+              <span className="flex items-center justify-center gap-2">
+                <Download className="w-4 h-4" />
+                Setup Guide
+              </span>
+            </button>
+            <button
+              onClick={downloadAllCodeAsText}
+              className="w-full py-3 px-6 rounded-xl font-medium text-base transition-all bg-gray-700 hover:bg-gray-600 text-gray-200 hover:scale-105"
+            >
+              <span className="flex items-center justify-center gap-2">
+                <Download className="w-4 h-4" />
+                All Code (Text)
+              </span>
+            </button>
+          </div>
           <p className="text-sm text-gray-400">
-            The ZIP contains all source code, configuration files, and documentation.
+            The ZIP contains all source code, configuration files, and documentation. If ZIP doesn't work, try the text alternatives.
           </p>
         </div>
       ),

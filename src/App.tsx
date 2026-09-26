@@ -6,7 +6,7 @@ import {
   Zap, Heart, Star, Crown, Skull, Package, RefreshCw,
   Database, Code, FileText, ArrowRight, ExternalLink, Download, Loader2
 } from 'lucide-react';
-import { generateVaultixZip } from './utils/downloadBot';
+import { generateVaultixZip, downloadSetupGuide, downloadAllCodeAsText } from './utils/downloadBot';
 import GuidePage from './pages/GuidePage';
 
 type Tab = 'guide' | 'overview' | 'commands' | 'systems' | 'families' | 'spells' | 'wands' | 'setup' | 'katabump' | 'files';
@@ -127,10 +127,12 @@ function OverviewTab() {
   const handleDownload = async () => {
     setDownloading(true);
     try {
+      console.log('Starting ZIP generation...');
       await generateVaultixZip();
+      console.log('ZIP generation complete');
     } catch (error) {
       console.error('Download failed:', error);
-      alert('Failed to generate ZIP file. Please try again.');
+      alert(`Failed to generate ZIP file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setDownloading(false);
     }
@@ -147,7 +149,7 @@ function OverviewTab() {
         </p>
         
         {/* Download Button */}
-        <div className="mt-6">
+        <div className="mt-6 space-y-3">
           <button
             onClick={handleDownload}
             disabled={downloading}
@@ -165,8 +167,24 @@ function OverviewTab() {
               </>
             )}
           </button>
-          <p className="text-sm text-gray-400 mt-2">
-            Complete bot source code ready for deployment
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={downloadSetupGuide}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-medium transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              <span>Setup Guide (Text)</span>
+            </button>
+            <button
+              onClick={downloadAllCodeAsText}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-medium transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              <span>All Code (Text)</span>
+            </button>
+          </div>
+          <p className="text-sm text-gray-400">
+            Complete bot source code ready for deployment. If ZIP doesn't work, try the text alternatives.
           </p>
         </div>
 

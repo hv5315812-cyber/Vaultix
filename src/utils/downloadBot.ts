@@ -1,5 +1,4 @@
 import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
 
 // Complete bot source files
 const botFiles: Record<string, string> = {};
@@ -578,12 +577,129 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
 `;
 
 export async function generateVaultixZip(): Promise<void> {
-  const zip = new JSZip();
+  try {
+    const zip = new JSZip();
+    
+    Object.entries(botFiles).forEach(([filename, content]) => {
+      zip.file(filename, content);
+    });
+
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 9 } });
+    
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'vaultix-bot.zip';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    
+    // Cleanup
+    setTimeout(() => {
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }, 100);
+  } catch (error) {
+    console.error('ZIP generation failed:', error);
+    throw error;
+  }
+}
+
+// Fallback: Generate all code as a single concatenated file
+export function downloadAllCodeAsText(): void {
+  let allCode = '# VAULTIX BOT - COMPLETE SOURCE CODE\n\n';
+  allCode += 'Copy each section below into the corresponding file.\n\n';
+  allCode += '=' .repeat(80) + '\n\n';
   
   Object.entries(botFiles).forEach(([filename, content]) => {
-    zip.file(filename, content);
+    allCode += `\n${'='.repeat(80)}\n`;
+    allCode += `FILE: ${filename}\n`;
+    allCode += `${'='.repeat(80)}\n\n`;
+    allCode += content;
+    allCode += '\n\n';
   });
+  
+  const blob = new Blob([allCode], { type: 'text/plain' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'vaultix-bot-complete-code.txt';
+  document.body.appendChild(a);
+  a.click();
+  
+  setTimeout(() => {
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }, 100);
+}
 
-  const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 9 } });
-  saveAs(blob, 'vaultix-bot.zip');
+// Fallback: Generate a simple setup guide file
+export function downloadSetupGuide(): void {
+  const guide = `# Vaultix Bot Setup Guide
+
+## Quick Start
+
+1. Create a Discord bot at https://discord.com/developers/applications
+2. Copy the bot token and application ID
+3. Create a .env file with:
+   DISCORD_TOKEN=your_token_here
+   CLIENT_ID=your_app_id_here
+
+4. Install dependencies:
+   npm install
+
+5. Build the bot:
+   npm run build
+
+6. Register commands:
+   npm run deploy
+
+7. Start the bot:
+   npm start
+
+## Features
+
+- 50-Floor Dungeon
+- 17 Families (Common to Extremely Rare)
+- 14 Wands with Staff evolution
+- 16 Spells
+- 11 Monsters
+- Full economy system
+- Persistent SQLite database
+
+## Commands
+
+/enlist - Begin your journey
+/profile - View your profile
+/work - Earn XP and coins
+/family - View your family
+/reroll - Reroll your family
+/wand - View your wand
+/spells - View learned spells
+/cast <spell> - Cast spell in combat
+/dungeon enter - Enter dungeon
+/dungeon status - Check progress
+/magicshop - Browse shop
+/buy <item> - Purchase items
+/inventory - View inventory
+/admin - Admin commands
+
+## Support
+
+For detailed setup instructions, visit the web dashboard.
+`;
+
+  const blob = new Blob([guide], { type: 'text/plain' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'VAULTIX_SETUP_GUIDE.txt';
+  document.body.appendChild(a);
+  a.click();
+  
+  setTimeout(() => {
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }, 100);
 }
