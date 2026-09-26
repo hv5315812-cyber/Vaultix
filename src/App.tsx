@@ -7,20 +7,21 @@ import {
   Database, Code, FileText, ArrowRight, ExternalLink, Download, Loader2
 } from 'lucide-react';
 import { generateVaultixZip } from './utils/downloadBot';
+import GuidePage from './pages/GuidePage';
 
-type Tab = 'overview' | 'commands' | 'systems' | 'families' | 'spells' | 'wands' | 'setup' | 'katabump' | 'files';
+type Tab = 'guide' | 'overview' | 'commands' | 'systems' | 'families' | 'spells' | 'wands' | 'setup' | 'katabump' | 'files';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [activeTab, setActiveTab] = useState<Tab>('guide');
 
   const tabs: { id: Tab; label: string; icon: any }[] = [
+    { id: 'guide', label: '🚀 Setup Guide', icon: Download },
     { id: 'overview', label: 'Overview', icon: Sparkles },
     { id: 'commands', label: 'Commands', icon: Terminal },
     { id: 'systems', label: 'Systems', icon: Settings },
     { id: 'families', label: 'Families', icon: Users },
     { id: 'spells', label: 'Spells', icon: Zap },
     { id: 'wands', label: 'Wands', icon: Wand2 },
-    { id: 'setup', label: 'Setup Guide', icon: FileText },
     { id: 'katabump', label: 'KataBump Deploy', icon: ExternalLink },
     { id: 'files', label: 'Project Files', icon: Code },
   ];
@@ -103,13 +104,13 @@ function App() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
+              {activeTab === 'guide' && <GuidePage />}
               {activeTab === 'overview' && <OverviewTab />}
               {activeTab === 'commands' && <CommandsTab />}
               {activeTab === 'systems' && <SystemsTab />}
               {activeTab === 'families' && <FamiliesTab />}
               {activeTab === 'spells' && <SpellsTab />}
               {activeTab === 'wands' && <WandsTab />}
-              {activeTab === 'setup' && <SetupTab />}
               {activeTab === 'katabump' && <KataBumpTab />}
               {activeTab === 'files' && <FilesTab />}
             </motion.div>
